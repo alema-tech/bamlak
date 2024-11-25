@@ -72,7 +72,7 @@ def start_websocket_server():
     """
     Initializes the WebSocket server to listen for incoming connections.
     """
-    server = WebsocketServer(host="0.0.0.0", port=8765)
+    server = WebsocketServer(host="192.168.137.124", port=8765)
     server.set_fn_new_client(handle_new_client)
     server.set_fn_message_received(handle_client_message)
     server.run_forever()
