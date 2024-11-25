@@ -44,9 +44,12 @@ def update_historical_data(analysis_results):
     })
 
 # ------------------------------
-# WebSocket Handler
+# WebSocket Handlers
 # ------------------------------
-def handle_new_client(client, server):
+def handle_new_client(client):
+    """
+    Handles new client connections.
+    """
     print(f"New client connected: {client}")
 
 def handle_client_message(client, server, message):
@@ -72,7 +75,7 @@ def start_websocket_server():
     """
     Initializes the WebSocket server to listen for incoming connections.
     """
-    server = WebsocketServer(host="192.168.137.124", port=8765)
+    server = WebsocketServer(host="192.168.137.124", port=8765)  # Update IP as needed
     server.set_fn_new_client(handle_new_client)
     server.set_fn_message_received(handle_client_message)
     server.run_forever()
@@ -83,12 +86,14 @@ def start_websocket_server():
 st.title("Induction Motor Vibration Analysis")
 st.sidebar.header("Configuration")
 
+# Start the WebSocket server in a separate thread if not already running
 if "websocket_thread" not in st.session_state:
     st.session_state.websocket_thread = threading.Thread(target=start_websocket_server, daemon=True)
     st.session_state.websocket_thread.start()
 
-st.info("Connect to the WebSocket server at ws://<your-server-ip>:8765 to send vibration data for analysis.")
+st.info("Connect to the WebSocket server at ws://192.168.137.124:8765 to send vibration data for analysis.")
 
+# Display historical trends if data is available
 if HISTORICAL_DATA:
     st.subheader("Historical Trends")
     timestamps = [entry["Timestamp"] for entry in HISTORICAL_DATA]
