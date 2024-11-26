@@ -1,11 +1,11 @@
-import numpy as np
 import json
+import numpy as np
 from websocket_server import WebsocketServer
 from datetime import datetime
 from collections import deque
-import matplotlib.pyplot as plt
-import streamlit as st
 import threading
+import streamlit as st
+import matplotlib.pyplot as plt
 
 # ------------------------------
 # Historical Data Management
@@ -16,13 +16,15 @@ HISTORICAL_DATA = deque(maxlen=100)  # Store up to 100 data points
 # Signal Analysis Functions
 # ------------------------------
 def calculate_rms(signal):
-    return np.sqrt(np.mean(signal ** 2))
+    return np.sqrt(np.mean(np.square(signal)))
+
 
 def perform_fft(signal, sampling_rate):
     n = len(signal)
     freqs = np.fft.fftfreq(n, d=1 / sampling_rate)
     fft_values = np.abs(np.fft.fft(signal))
     return freqs[:n // 2], fft_values[:n // 2]
+
 
 def analyze_vibration_data(vibration_data, sampling_rate):
     rms_value = calculate_rms(vibration_data)
@@ -32,6 +34,7 @@ def analyze_vibration_data(vibration_data, sampling_rate):
         "RMS Value": rms_value,
         "Dominant Frequency": dominant_frequency
     }
+
 
 # ------------------------------
 # Update Historical Data
@@ -43,14 +46,25 @@ def update_historical_data(analysis_results):
         "Dominant Frequency": analysis_results["Dominant Frequency"]
     })
 
+
 # ------------------------------
 # WebSocket Handlers
 # ------------------------------
-def handle_new_client(client):
+def handle_new_client(client, server):
     """
     Handles new client connections.
     """
-    print(f"New client connected: {client}")
+    print(f"New client connected: {client['id']}")
+    print(f"Total connected clients: {len(server.clients)}")
+
+
+def handle_client_left(client, server):
+    """
+    Handles client disconnections.
+    """
+    print(f"Client disconnected: {client['id']}")
+    print(f"Total connected clients: {len(server.clients)}")
+
 
 def handle_client_message(client, server, message):
     """
@@ -68,6 +82,7 @@ def handle_client_message(client, server, message):
         error_message = {"error": str(e)}
         server.send_message(client, json.dumps(error_message))
 
+
 # ------------------------------
 # WebSocket Server Start
 # ------------------------------
@@ -75,10 +90,12 @@ def start_websocket_server():
     """
     Initializes the WebSocket server to listen for incoming connections.
     """
-    server = WebsocketServer(host="192.168.137.124", port=8765)  # Update IP as needed
+    server = WebsocketServer(host="192.168.1.180", port=8765)  # Update IP as needed
     server.set_fn_new_client(handle_new_client)
+    server.set_fn_client_left(handle_client_left)
     server.set_fn_message_received(handle_client_message)
     server.run_forever()
+
 
 # ------------------------------
 # Streamlit Application
@@ -91,7 +108,7 @@ if "websocket_thread" not in st.session_state:
     st.session_state.websocket_thread = threading.Thread(target=start_websocket_server, daemon=True)
     st.session_state.websocket_thread.start()
 
-st.info("Connect to the WebSocket server at ws://192.168.137.124:8765 to send vibration data for analysis.")
+st.info("Connect to the WebSocket server at ws://192.168.1.180:8765 to send vibration data for analysis.")
 
 # Display historical trends if data is available
 if HISTORICAL_DATA:
